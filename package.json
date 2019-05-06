@@ -1,0 +1,16 @@
+{
+  "name": "dt-perf",
+  "version": "1.0.0",
+  "description": "",
+  "main": ".#dependencies.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^12.0.0",
+    "@types/shelljs": "^0.8.5",
+    "shelljs": "^0.8.3"
+  }
+}
