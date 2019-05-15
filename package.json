@@ -11,6 +11,9 @@
   "dependencies": {
     "@types/node": "^12.0.0",
     "@types/shelljs": "^0.8.5",
-    "shelljs": "^0.8.3"
+    "date-range-array": "^2.1.0",
+    "download-file-sync": "^1.0.4",
+    "shelljs": "^0.8.3",
+    "stats-lite": "^2.2.0"
   }
 }
