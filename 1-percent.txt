@@ -1,7 +1,15 @@
 Who are the One Percent?
+Is it time to break Amazon up?
 
 7 packages, in guessed order of importance:
 
+react (4.6 / 2.4 / 41)
+lodash (19.2 / 1.8 / 2)
+aws-sdk (2.3 / - / 7)
+jquery (2.5 / 0.7 / 2)
+@babel/types (8.9 / - / ?)
+immutable (1.9 / - / ?)
+dojo (0.0004 / 0.003 / 1)
 1. react (4.6 / 2.4 / 41)
 3. lodash (19.2 / 1.8 / 2)
 2. aws-sdk (2.3 / - / 7)
@@ -10,7 +18,71 @@ Who are the One Percent?
 6. immutable (1.9 / - / ?)
 5. dojo (0.0004 / 0.003 / 1)
 
+=== AWS reduction ===
+Amazon's source defines 27,587 types.
+This is expensive and slow to parse, let alone check.
+
+Files:           297
+Lines:        319245
+Nodes:        929209
+Identifiers:  348105
+Symbols:      227495
+Types:         78716
+Memory used: 376683K
+I/O read:      0.04s
+I/O write:     0.00s
+Parse time:    1.61s
+Bind time:     1.04s
+Check time:    1.43s
+Emit time:     0.00s
+Total time:    4.08s
+
+==== but with skipLibCheck! ====
+Files:           297
+Lines:        319245
+Nodes:        929209
+Identifiers:  348105
+Symbols:      209313
+Types:          1268
+Memory used: 305364K
+I/O read:      0.04s
+I/O write:     0.00s
+Parse time:    1.54s
+Bind time:     1.06s
+Check time:    0.11s
+Emit time:     0.00s
+Total time:    2.71s
+
+
+Is it
+Original = 78716
+Removing all typings code except tests = 70k
+Remove references to aws-sdk = 11k
+  [Re]Move aws-sdk/clients/ = 12k
+    clients/a-n = 12k
+      a-g = 12k
+        a-c = 12k
+          a = 12.3k
+            aa-am (5) = 12.3k
+              acm
+              acmpca
+              alexaforbusiness
+              all = 12.3k
+                start-Snowball = 39k
+                SNS-end = 53k
+              amplify = 12.3k
+            ap (7) = 76k
+            aq-az (3) = 78k
+          b = 78k
+          c = 69k
+        d-g = 61k
+      h-n = 66k
+    clients/o-z = 58k
+
+=== React reduction ===
 Original = 95,485
+
+It's probably the triple-nested conditional types b/w infer
 
 In react, reducing the size of
 DomAttributes<T> cut about 20,000 types
