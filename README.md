@@ -81,3 +81,12 @@ around 25% (0.49 * 0.49), and three packages is 12.5% (0.49**3). But
 it also assumes that packages don't have dependencies; and since typed
 packages probably cluster, the true probability of three typed
 packages is probably higher than 12.5%.
+
+## typedPopular.js
+
+Dump the names of popular, but untyped, packages. It iterates down
+all-the-package-names, which is ordered by number of dependents. Right
+now it stops at the first package it encounters with less than 300,000
+monthly installs. This is not a particularly reliable cutoff since
+all-the-package-names is ordered number of dependents, not number of
+installs.
