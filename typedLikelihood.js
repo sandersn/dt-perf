@@ -1,14 +1,16 @@
 const random = require('random')
 const allPackages = require('all-the-package-names')
 const download = require('download-file-sync')
+const wget = require('node-wget-promise')
 const d3 = require('d3-format')
 const fs = require('fs')
 const path = require('path')
 const npmApi = require('npm-api')
+const tar = require('tar')
 var npm = new npmApi()
 
 const dtPath = "../../DefinitelyTyped/types"
-const sampleSize = 100000
+const sampleSize = 10000
 
 async function main() {
     let typedPackages = 0
@@ -29,7 +31,7 @@ async function main() {
         catch (e) {
             // do nothing, handle below
         }
-        if (p === undefined || n === undefined) {
+        if (p === undefined || n === undefined || name.startsWith("@types/")) {
             process.stdout.write("!")
             skipped++
             continue
@@ -46,8 +48,13 @@ async function main() {
             definitelyTypedPackages++
             typed = true
         }
+        else if (await downloadTar(p.dist.tarball)) {
+            process.stdout.write("~")
+            typedPackages++
+            typed = true
+        }
         else {
-            process.stdout.write('.')
+            process.stdout.write(' ')
         }
         downloads += n
         if (typed)
@@ -74,5 +81,37 @@ function mangleScoped(name) {
     return name[0] === "@" ? name.slice(1).replace('/', "__") : name
 }
 
+/** @param {string} url */
+async function downloadTar(url) {
+    let cachepath = path.join('data', path.basename(url))
+    if (!fs.existsSync(cachepath)) {
+        try {
+            await wget(url, { output: cachepath })
+        }
+        catch (e) {
+            console.log(e)
+            return false
+        }
+    }
+    let found = false
+    try {
+        tar.list({
+            sync: true,
+            file: cachepath,
+            filter(name) {
+                if (name.match(/package\/index.d.ts/)) {
+                    found = true
+                    return true
+                }
+                return false
+            }
+        })
+    }
+    catch (e) {
+        console.log(e)
+        return false
+    }
+    return found
+}
 
 main().catch(e => { console.log(e); process.exit(1) });
