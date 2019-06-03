@@ -23,9 +23,9 @@ declare module "random" {
     export function uniformInt(min: number, max: number): () => number;
 }
 declare module "npm-api" {
-    class Repo {
-        constructor(name: string)
-        package(): Promise<{
+    namespace NpmApi {
+        interface Package {
+            [s: string]: any
             typings?: string
             types?: string
             repository?: {
@@ -41,11 +41,17 @@ declare module "npm-api" {
                 unpackedSize: number
                 'npm-signature': string
             }
-            [s: string]: any
-        }>
+        }
+    }
+    class Repo {
+        constructor(name: string)
+        package(): Promise<NpmApi.Package>
     }
     class NpmApi {
         Repo: typeof Repo
     }
     export = NpmApi;
+}
+declare module "d3-format" {
+    export function format(format: string): (input: any) => string;
 }

@@ -1,3 +1,7 @@
+const fs = require('fs')
+const path = require('path')
+const wget = require('node-wget-promise')
+const tar = require('tar')
 /**
  * @param {Date} d
  * @return string
@@ -21,3 +25,62 @@ module.exports.parsePerformance = function(log) {
 }
 
 
+/**
+ * @param {import('npm-api').Package} p
+ * @param {string} name
+ * @param {string} dtPath
+ * @return {Promise<'dt' | 'typings' | 'types' | 'index' | undefined>}
+ */
+module.exports.getTypes = async function (p, name, dtPath) {
+    if (p.typings) {
+        return 'typings'
+    }
+    if (p.types) {
+        return 'types'
+    }
+    else if (fs.existsSync(path.join(dtPath, mangleScoped(name)))) {
+        return 'dt'
+    }
+    else if (await downloadTar(p.dist.tarball)) {
+        return 'index'
+    }
+}
+
+
+/** @param {string} name */
+function mangleScoped(name) {
+    return name[0] === "@" ? name.slice(1).replace('/', "__") : name
+}
+
+/** @param {string} url */
+async function downloadTar(url) {
+    let cachepath = path.join('data', path.basename(url))
+    if (!fs.existsSync(cachepath)) {
+        try {
+            await wget(url, { output: cachepath })
+        }
+        catch (e) {
+            console.log(e)
+            return false
+        }
+    }
+    let found = false
+    try {
+        tar.list({
+            sync: true,
+            file: cachepath,
+            filter(name) {
+                if (name.match(/package\/index.d.ts/)) {
+                    found = true
+                    return true
+                }
+                return false
+            }
+        })
+    }
+    catch (e) {
+        console.log(e)
+        return false
+    }
+    return found
+}
