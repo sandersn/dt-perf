@@ -33,6 +33,7 @@ declare module "npm-api" {
                 url: string
             }
             dependencies: { [s: string]: string }
+            devDependencies: { [s: string]: string }
             dist: {
                 integrity: string
                 shasum: string

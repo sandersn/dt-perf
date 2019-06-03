@@ -1,3 +1,4 @@
+const fs = require('fs')
 const random = require('random')
 const allPackages = require('all-the-package-names')
 const d3 = require('d3-format')
@@ -8,6 +9,10 @@ const pct = d3.format(".0%")
 
 const dtPath = "../../DefinitelyTyped/types"
 const sampleSize = 10000
+if (!fs.existsSync(dtPath)) {
+    console.error("Incorrect path to Definitely Typed: ", dtPath)
+    process.exit(1)
+}
 
 async function main() {
     let typedPackages = 0
@@ -18,7 +23,7 @@ async function main() {
     const sampler = random.uniformInt(0, allPackages.length - 1)
     for (let i = 0; i < sampleSize; i++) {
         const name = allPackages[sampler()]
-        const p = await getPackage(name)
+        const p = await getPackage(name, /*reportDownloads*/ true)
         if (p === undefined || name.startsWith("@types/")) {
             skipped++
             continue

@@ -91,15 +91,16 @@ async function downloadTar(url) {
 
 /**
  * @param {string} name
+ * @param {boolean} [reportDownloads]
  * @return {Promise<{ packag: import('npm-api').Package, downloads: number } | undefined>}
  */
-module.exports.getPackage = async function (name) {
+module.exports.getPackage = async function (name, reportDownloads) {
     let packag
     let downloads
     const repo = new npm.Repo(name)
     try {
         packag = await repo.package()
-        downloads = JSON.parse(download(`https://api.npmjs.org/downloads/point/last-month/${name}`)).downloads
+        downloads = reportDownloads ? JSON.parse(download(`https://api.npmjs.org/downloads/point/last-month/${name}`)).downloads : 0
     }
     catch (e) {
         // do nothing, caller needs to handle it
