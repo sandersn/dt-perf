@@ -1,12 +1,9 @@
 const random = require('random')
 const allPackages = require('all-the-package-names')
-const download = require('download-file-sync')
 const d3 = require('d3-format')
-const npmApi = require('npm-api')
 const readline = require('readline')
-const { getTypes } = require('./shared')
+const { getTypes, getPackage } = require('./shared')
 
-const npm = new npmApi()
 const pct = d3.format(".0%")
 
 const dtPath = "../../DefinitelyTyped/types"
@@ -21,25 +18,16 @@ async function main() {
     const sampler = random.uniformInt(0, allPackages.length - 1)
     for (let i = 0; i < sampleSize; i++) {
         const name = allPackages[sampler()]
-        const repo = new npm.Repo(name)
-        let p
-        let n
-        try {
-            p = await repo.package()
-            n = JSON.parse(download(`https://api.npmjs.org/downloads/point/last-month/${name}`)).downloads
-        }
-        catch (e) {
-            // do nothing, handle below
-        }
-        if (p === undefined || n === undefined || name.startsWith("@types/")) {
+        const p = await getPackage(name)
+        if (p === undefined || name.startsWith("@types/")) {
             skipped++
             continue
         }
-        const typed = await getTypes(p, name, dtPath)
-        downloads += n
+        const typed = await getTypes(p.packag, name, dtPath)
+        downloads += p.downloads
         if (typed) {
             typedPackages++
-            typedDownloads += n
+            typedDownloads += p.downloads
             if (typed === 'dt') {
                 definitelyTypedPackages++
             }

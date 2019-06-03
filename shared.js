@@ -2,6 +2,10 @@ const fs = require('fs')
 const path = require('path')
 const wget = require('node-wget-promise')
 const tar = require('tar')
+const download = require('download-file-sync')
+const npmApi = require('npm-api')
+
+const npm = new npmApi()
 /**
  * @param {Date} d
  * @return string
@@ -83,4 +87,22 @@ async function downloadTar(url) {
         return false
     }
     return found
+}
+
+/**
+ * @param {string} name
+ * @return {Promise<{ packag: import('npm-api').Package, downloads: number } | undefined>}
+ */
+module.exports.getPackage = async function (name) {
+    let packag
+    let downloads
+    const repo = new npm.Repo(name)
+    try {
+        packag = await repo.package()
+        downloads = JSON.parse(download(`https://api.npmjs.org/downloads/point/last-month/${name}`)).downloads
+    }
+    catch (e) {
+        // do nothing, caller needs to handle it
+    }
+    return packag !== undefined && downloads !== undefined ? { packag, downloads } : undefined
 }
