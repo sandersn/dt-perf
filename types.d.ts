@@ -3,7 +3,7 @@ declare module "date-range-array" {
     export = f;
 }
 declare module "download-file-sync" {
-    function f(url: string): any;
+    function f(url: string): string;
     export = f;
 }
 declare module "node-wget-promise" {
@@ -46,13 +46,10 @@ declare module "npm-api" {
     }
     class Repo {
         constructor(name: string)
-        package(): Promise<NpmApi.Package>
+        package(version?: string): Promise<NpmApi.Package>
     }
     class NpmApi {
         Repo: typeof Repo
     }
     export = NpmApi;
-}
-declare module "d3-format" {
-    export function format(format: string): (input: any) => string;
 }

@@ -7,6 +7,7 @@ const { getTypes, getPackage } = require('./shared')
 
 const pct = d3.format(".0%")
 
+const date = '06/03/2019'
 const dtPath = "../../DefinitelyTyped/types"
 const sampleSize = 10000
 if (!fs.existsSync(dtPath)) {
@@ -25,7 +26,7 @@ async function main() {
     const sampler = random.uniformInt(0, allPackages.length - 1)
     for (let i = 0; i < sampleSize; i++) {
         const name = allPackages[sampler()]
-        const p = await getPackage(name)
+        const p = await getPackage(name, date)
         if (p === undefined || name.startsWith("@types/")) {
             skipped++
             continue
@@ -55,7 +56,7 @@ async function countDependencies(dependencies) {
     let dt = 0
     if (dependencies) {
         for (const d of Object.keys(dependencies)) {
-            const dp = await getPackage(d)
+            const dp = await getPackage(d, date)
             if (dp === undefined || d.startsWith("@types/")) {
                 continue
             }

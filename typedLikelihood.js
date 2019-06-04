@@ -23,7 +23,7 @@ async function main() {
     const sampler = random.uniformInt(0, allPackages.length - 1)
     for (let i = 0; i < sampleSize; i++) {
         const name = allPackages[sampler()]
-        const p = await getPackage(name, /*reportDownloads*/ true)
+        const p = await getPackage(name, /*date*/ undefined, /*reportDownloads*/ true)
         if (p === undefined || name.startsWith("@types/")) {
             skipped++
             continue

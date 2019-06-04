@@ -4,8 +4,24 @@ const wget = require('node-wget-promise')
 const tar = require('tar')
 const download = require('download-file-sync')
 const npmApi = require('npm-api')
-
+const NpmRegistry = require('npm-registry-client')
+const util = require('util')
 const npm = new npmApi()
+const client = new NpmRegistry()
+
+/**
+ * @param {string} url
+ * @param {object} options
+ */
+const clientGet = (url, options) => new Promise((resolve, reject) => client.get(url, options, (e, d) => {
+    if (e) {
+        reject(e)
+    }
+    else {
+        resolve(d)
+    }
+}))
+
 /**
  * @param {Date} d
  * @return string
@@ -91,19 +107,60 @@ async function downloadTar(url) {
 
 /**
  * @param {string} name
+ * @param {string} [date]
  * @param {boolean} [reportDownloads]
  * @return {Promise<{ packag: import('npm-api').Package, downloads: number } | undefined>}
  */
-module.exports.getPackage = async function (name, reportDownloads) {
+module.exports.getPackage = async function (name, date, reportDownloads) {
+    const version = await getLatestVersion(name, date)
     let packag
     let downloads
     const repo = new npm.Repo(name)
     try {
-        packag = await repo.package()
+        packag = version ? await repo.package(version) : await repo.package()
         downloads = reportDownloads ? JSON.parse(download(`https://api.npmjs.org/downloads/point/last-month/${name}`)).downloads : 0
     }
     catch (e) {
         // do nothing, caller needs to handle it
     }
     return packag !== undefined && downloads !== undefined ? { packag, downloads } : undefined
+}
+
+/**
+ * @param {string} name
+ * @param {string | undefined} date
+ */
+async function getLatestVersion(name, date) {
+    if (date) {
+        let repo
+        try {
+            repo = await clientGet('https://registry.npmjs.org/' + name, { timeout: 10000 })
+        }
+        catch (e) {
+        }
+        if (repo && repo.time) {
+            return findLatestVersion(repo.time, new Date(date))
+        }
+    }
+}
+
+/**
+ * @param {{ [s: string]: string }} time
+ * @param {Date} date
+ */
+function findLatestVersion (time, date) {
+    let latest = new Date(0)
+    let latestVersion
+    for (const v of Object.keys(time)) {
+        if (v === 'modified' || v === 'created')
+            continue
+        const d = new Date(time[v])
+        if (d > date)
+            continue
+        if (d > latest) {
+            latest = d
+            latestVersion = v
+        }
+    }
+    return latestVersion
 }
