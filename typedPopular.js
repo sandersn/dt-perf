@@ -4,7 +4,6 @@ const { getTypes, getPackage } = require('./shared')
 const readline = require('readline')
 
 const pct = d3.format(".1%")
-const mm = d3.format(".3s")
 const dtPath = "../../DefinitelyTyped/types"
 const date = '08/03/2018'
 const skiplist = [
@@ -17,8 +16,6 @@ const skiplist = [
 ]
 async function main() {
     let total = 0
-    let count = 0
-    let skipped = 0
     let missing = 0
     let totals = {
         types: 0,
@@ -36,15 +33,13 @@ async function main() {
         total++
         if (total > 500) break
         let p
-        let n
         try {
-            p = await getPackage(name, date, /*reportDownloads*/ true)
-            n = p && p.downloads
+            p = await getPackage(name, date, /*reportDownloads*/ false)
         }
         catch (e) {
             // do nothing, handle below
         }
-        if (p === undefined || n === undefined) {
+        if (p === undefined) {
             missing++
             continue
         }
@@ -58,7 +53,7 @@ async function main() {
         else {
             untypeds.push(name)
         }
-        summary(total, totals, name, n)
+        summary(total, totals, name)
     }
     // console.log("\n\nSkipped: ")
     // console.log(skippeds)
@@ -71,13 +66,12 @@ async function main() {
  * @param {number} total
  * @param {{ [s: string]: number }} totals
  * @param {string} name
- * @param {number} downloads
  */
-function summary(total, totals, name, downloads) {
+function summary(total, totals, name) {
     readline.clearLine(process.stdout, /*left*/ -1)
     readline.cursorTo(process.stdout, 0, 0)
     const typedPercent = (totals.types + totals.typings + totals.index) / total
-    const msg = `${total} (${pct(typedPercent)}): ${Object.keys(totals).map(k => `${k}: ${totals[k]}`).join(', ')} -- ${name} ${mm(downloads)}`
+    const msg = `${total} (${pct(typedPercent)}): ${Object.keys(totals).map(k => `${k}: ${totals[k]}`).join(', ')} -- ${name}`
     process.stdout.write(msg + '\n')
 }
 
