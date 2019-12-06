@@ -46,7 +46,7 @@ async function main() {
         // if (n < 30000) {
             // break
         // }
-        const t = await getTypes(p.packag, name, dtPath)
+        const t = getTypes(p.packag, name, dtPath)
         if (t) {
             totals[t]++
         }

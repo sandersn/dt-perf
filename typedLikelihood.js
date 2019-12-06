@@ -28,7 +28,7 @@ async function main() {
             skipped++
             continue
         }
-        const typed = await getTypes(p.packag, name, dtPath)
+        const typed = getTypes(p.packag, name, dtPath)
         downloads += p.downloads
         if (typed) {
             typedPackages++

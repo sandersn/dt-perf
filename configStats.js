@@ -3,7 +3,7 @@ const random = require('random')
 const allPackages = require('all-the-package-names')
 const d3 = require('d3-format')
 const readline = require('readline')
-const { getTypes, getPackage } = require('./shared')
+const { getPackage } = require('./shared')
 
 const pct = d3.format(".0%")
 
@@ -37,9 +37,15 @@ async function main() {
             tsconfig++
         }
         else {
-            o = getjson(url + '/master/jsconfig.json')
+            o = getjson(url + '/master/src/tsconfig.json')
             if (o && o.compilerOptions) {
-                jsconfig++
+                tsconfig++
+            }
+            else {
+                o = getjson(url + '/master/jsconfig.json')
+                if (o && o.compilerOptions) {
+                    jsconfig++
+                }
             }
         }
         if (o && o.compilerOptions) {

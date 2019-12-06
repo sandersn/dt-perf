@@ -1,11 +1,8 @@
 const fs = require('fs')
 const path = require('path')
-const wget = require('node-wget-promise')
-const tar = require('tar')
 const download = require('download-file-sync')
 const npmApi = require('npm-api')
 const NpmRegistry = require('npm-registry-client')
-const util = require('util')
 const npm = new npmApi()
 const client = new NpmRegistry()
 
@@ -49,9 +46,9 @@ module.exports.parsePerformance = function(log) {
  * @param {import('npm-api').Package} p
  * @param {string} name
  * @param {string} dtPath
- * @return {Promise<'dt' | 'typings' | 'types' | 'index' | undefined>}
+ * @return {'dt' | 'typings' | 'types' | 'index' | undefined}
  */
-module.exports.getTypes = async function (p, name, dtPath) {
+module.exports.getTypes = function (p, name, dtPath) {
     if (p.typings) {
         return 'typings'
     }
@@ -61,7 +58,7 @@ module.exports.getTypes = async function (p, name, dtPath) {
     else if (fs.existsSync(path.join(dtPath, mangleScoped(name)))) {
         return 'dt'
     }
-    else if (await downloadTar(p.dist.tarball)) {
+    else if (queryAlgolia(name)) {
         return 'index'
     }
 }
@@ -72,37 +69,10 @@ function mangleScoped(name) {
     return name[0] === "@" ? name.slice(1).replace('/', "__") : name
 }
 
-/** @param {string} url */
-async function downloadTar(url) {
-    let cachepath = path.join('data', path.basename(url))
-    if (!fs.existsSync(cachepath)) {
-        try {
-            await wget(url, { output: cachepath })
-        }
-        catch (e) {
-            console.log(e)
-            return false
-        }
-    }
-    let found = false
-    try {
-        tar.list({
-            sync: true,
-            file: cachepath,
-            filter(name) {
-                if (name.match(/package\/index.d.ts/)) {
-                    found = true
-                    return true
-                }
-                return false
-            }
-        })
-    }
-    catch (e) {
-        console.log(e)
-        return false
-    }
-    return found
+/** @param {string} name */
+function queryAlgolia(name) {
+    const response = JSON.parse(download(`https://ofcncog2cu-dsn.algolia.net/1/indexes/npm-search/${name}?attributes=types&x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.27.1&x-algolia-application-id=OFCNCOG2CU&x-algolia-api-key=f54e21fa3a2a0160595bb058179bfb1e`))
+    return response.types && response.types.ts && response.types.ts === "included";
 }
 
 /**

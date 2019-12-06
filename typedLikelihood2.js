@@ -61,7 +61,7 @@ async function countDependencies(dependencies) {
                 continue
             }
             total++
-            const t = await getTypes(dp.packag, d, dtPath)
+            const t = getTypes(dp.packag, d, dtPath)
             if (t) {
                 typed++
                 if (t === 'dt') {
