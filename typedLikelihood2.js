@@ -1,6 +1,6 @@
 const fs = require('fs')
 const random = require('random')
-const allPackages = require('all-the-package-names')
+const allRepos = require('all-the-package-repos')
 const d3 = require('d3-format')
 const readline = require('readline')
 const { getTypes, getPackage } = require('./shared')
@@ -23,6 +23,7 @@ async function main() {
     let definitelyTypedPackages = 0
     let perfect = 0
     let skipped = 0
+    const allPackages = Object.keys(allRepos)
     const sampler = random.uniformInt(0, allPackages.length - 1)
     for (let i = 0; i < sampleSize; i++) {
         const name = allPackages[sampler()]

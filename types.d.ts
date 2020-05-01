@@ -18,6 +18,10 @@ declare module "all-the-package-names" {
     const names: string[];
     export = names;
 }
+declare module "all-the-package-repos" {
+    const repos: { [s: string]: string };
+    export = repos;
+}
 declare module "random" {
     export function uniform(min: number, max: number): () => number;
     export function uniformInt(min: number, max: number): () => number;
