@@ -1,4 +1,12 @@
-Performance is just measured using type counts from batch compilation.
+## Quick Start
+
+You want to run
+
+```
+$ node typedLikelihood.js 2>/dev/null
+```
+
+and then report P(typed-dep) and P(typed-dep)*P(DT-only).
 
 ## history.js
 

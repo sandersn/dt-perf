@@ -5,7 +5,7 @@ const d3 = require('d3-format')
 const readline = require('readline')
 const { getTypes, getPackage } = require('./shared')
 
-const pct = d3.format(".0%")
+const pct = d3.format(".1%")
 
 const date = '06/03/2019'
 const dtPath = "../../DefinitelyTyped/types"
