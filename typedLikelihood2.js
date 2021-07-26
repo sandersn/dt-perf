@@ -17,9 +17,7 @@ if (!fs.existsSync(dtPath)) {
 
 async function main() {
     let typedDependencies = 0
-    let typedDevDependencies = 0
     let dependencyCount = 0
-    let devDependencyCount = 0
     let definitelyTypedPackages = 0
     let perfect = 0
     let skipped = 0
@@ -38,11 +36,7 @@ async function main() {
         definitelyTypedPackages += dt
         if (total === typed && total > 0)
             perfect++
-        ;[total, typed, dt] = await countDependencies(p.packag.devDependencies)
-        devDependencyCount += total
-        typedDevDependencies += typed
-        definitelyTypedPackages += dt
-        summary(i, skipped, perfect, dependencyCount, devDependencyCount, typedDependencies, typedDevDependencies, definitelyTypedPackages)
+        summary(i, skipped, perfect, dependencyCount, typedDependencies, definitelyTypedPackages)
     }
 }
 
@@ -79,14 +73,11 @@ async function countDependencies(dependencies) {
  * @param {number} skipped
  * @param {number} perfect
  * @param {number} dependencyCount
- * @param {number} devDependencyCount
  * @param {number} typedDependencies
- * @param {number} typedDevDependencies
  * @param {number} definitelyTypedPackages
  */
-function summary(i, skipped, perfect, dependencyCount, devDependencyCount, typedDependencies, typedDevDependencies, definitelyTypedPackages) {
+function summary(i, skipped, perfect, dependencyCount, typedDependencies, definitelyTypedPackages) {
     const pTyped = typedDependencies / dependencyCount
-    const pBothTyped = (typedDependencies + typedDevDependencies) / (dependencyCount + devDependencyCount)
     if (i % 100) {
         readline.clearLine(process.stdout, /*left*/ -1)
         readline.cursorTo(process.stdout, 0)
@@ -94,6 +85,6 @@ function summary(i, skipped, perfect, dependencyCount, devDependencyCount, typed
     else {
         process.stdout.write('\n')
     }
-    const msg = `P(typed-dep): ${pct(pTyped)} P(typed-dep+dev): ${pct(pBothTyped)} (total: ${dependencyCount + devDependencyCount}) (samples: ${i}/${sampleSize}) (DT-only: ${pct(definitelyTypedPackages / (typedDependencies + typedDevDependencies))}) PERFECT: ${perfect} (${pct(perfect / (i - skipped))})`
+    const msg = `P(typed-dep): ${pct(pTyped)} (total: ${dependencyCount}) (samples: ${i}/${sampleSize}) (DT-only: ${pct(definitelyTypedPackages / typedDependencies)}) PERFECT: ${perfect} (${pct(perfect / (i - skipped))})`
     process.stdout.write(msg)
 }
