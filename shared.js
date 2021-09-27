@@ -87,6 +87,9 @@ module.exports.getPackage = async function (name, date, reportDownloads) {
     let downloads
     const repo = new npm.Repo(name)
     try {
+        if (date && !version) {
+            return undefined
+        }
         packag = version ? await repo.package(version) : await repo.package()
         downloads = reportDownloads ? JSON.parse(download(`https://api.npmjs.org/downloads/point/last-month/${name}`)).downloads : 0
     }
@@ -125,7 +128,7 @@ function findLatestVersion (time, date) {
         if (v === 'modified' || v === 'created')
             continue
         const d = new Date(time[v])
-        if (d > date)
+        if (d < date)
             continue
         if (d > latest) {
             latest = d
