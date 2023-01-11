@@ -1,8 +1,8 @@
-const fs = require('fs')
-const path = require('path')
-const download = require('download-file-sync')
-const npmApi = require('npm-api')
-const NpmRegistry = require('npm-registry-client')
+import * as fs from 'fs'
+import * as path from 'path'
+import * as download from 'download-file-sync'
+import npmApi from 'npm-api'
+import NpmRegistry from 'npm-registry-client'
 const npm = new npmApi()
 const client = new NpmRegistry()
 
@@ -10,7 +10,7 @@ const client = new NpmRegistry()
  * @param {string} url
  * @param {object} options
  */
-const clientGet = (url, options) => new Promise((resolve, reject) => client.get(url, options, (e, d) => {
+export const clientGet = (url, options) => new Promise((resolve, reject) => client.get(url, options, (e, d) => {
     if (e) {
         reject(e)
     }
@@ -23,7 +23,7 @@ const clientGet = (url, options) => new Promise((resolve, reject) => client.get(
  * @param {Date} d
  * @return string
  */
-module.exports.dateKey = function (d) {
+export function dateKey(d) {
     const iso = d.toISOString()
     return iso.slice(0, iso.indexOf("T"))
 }
@@ -31,7 +31,7 @@ module.exports.dateKey = function (d) {
  * @param {string} log
  * @return {{ [s: string]: number }}
  */
-module.exports.parsePerformance = function(log) {
+export function parsePerformance(log) {
     const lines = log.split('\n')
     const i = lines.findIndex(line => line.match(/PERFORMANCE/))
     if (i === -1) {
@@ -48,7 +48,7 @@ module.exports.parsePerformance = function(log) {
  * @param {string} dtPath
  * @return {'dt' | 'typings' | 'types' | 'index' | undefined}
  */
-module.exports.getTypes = function (p, name, dtPath) {
+export function getTypes(p, name, dtPath) {
     if (p.typings) {
         return 'typings'
     }
@@ -77,11 +77,11 @@ function queryAlgolia(name) {
 
 /**
  * @param {string} name
- * @param {string} [date]
+ * @param {Date | string} [date]
  * @param {boolean} [reportDownloads]
  * @return {Promise<{ packag: import('npm-api').Package, downloads: number } | undefined>}
  */
-module.exports.getPackage = async function (name, date, reportDownloads) {
+export async function getPackage(name, date, reportDownloads) {
     const version = await getLatestVersion(name, date)
     let packag
     let downloads
@@ -101,7 +101,7 @@ module.exports.getPackage = async function (name, date, reportDownloads) {
 
 /**
  * @param {string} name
- * @param {string | undefined} date
+ * @param {Date | string | undefined} date
  */
 async function getLatestVersion(name, date) {
     if (date) {

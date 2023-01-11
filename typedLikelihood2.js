@@ -13,7 +13,9 @@ if (!fs.existsSync(dtPath)) {
     process.exit(1)
 }
 
-// https://replicate.npmjs.com/registry/_all_docs has a JSON of all non-scoped packages
+// curl -o all-docs.json https://replicate.npmjs.com/registry/_all_docs gives a JSON of all non-scoped packages
+// In April 2022, it had 1.8 million rows and was xxx MB
+// all-the-package-names can also work, as long as it's been updated recently
 async function main() {
     let typedDependencies = 0
     let dependencyCount = 0
@@ -23,12 +25,15 @@ async function main() {
     /** @type {Record<string, number>} */
     let packagecount = {}
     // const allPackages = Object.keys(allRepos)
-    /** @type {Array<{id: string, key: string, value: { rev: string }}>} */
-    const allPackages = JSON.parse(fs.readFileSync('all-docs.json', 'utf8')).rows
+    /* @type {Array<{id: string, key: string, value: { rev: string }}>} */
+    /** @type {Array<string>} */
+    const allPackages = require('all-the-package-names') // JSON.parse(fs.readFileSync('all-docs.json', 'utf8')).rows
     const sampler = random.uniformInt(0, allPackages.length - 1)
     for (let i = 0; i < sampleSize; i++) {
-        const name = allPackages[sampler()].id
-        const p = await getPackage(name, '09/27/2019') // '09/25/2019')
+        const name = allPackages[sampler()] // allPackages[sampler()].id
+        const startDate = new Date(Date.now())
+        startDate.setFullYear(startDate.getFullYear() - 2)
+        const p = await getPackage(name, startDate) // TODO: Calculate this instead of hard-coding it
         if (p === undefined || name.startsWith("@types/")) {
             skipped++
             continue
