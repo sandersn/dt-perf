@@ -1,8 +1,10 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import * as download from 'download-file-sync'
+import download from 'download-file-sync'
 import npmApi from 'npm-api'
 import NpmRegistry from 'npm-registry-client'
+import wget from 'node-wget-promise'
+import tar from 'tar'
 const npm = new npmApi()
 const client = new NpmRegistry()
 
@@ -46,9 +48,9 @@ export function parsePerformance(log) {
  * @param {import('npm-api').Package} p
  * @param {string} name
  * @param {string} dtPath
- * @return {'dt' | 'typings' | 'types' | 'index' | undefined}
+ * @return {Promise<'dt' | 'typings' | 'types' | 'index' | undefined>}
  */
-export function getTypes(p, name, dtPath) {
+export async function getTypes(p, name, dtPath) {
     if (p.typings) {
         return 'typings'
     }
@@ -58,7 +60,7 @@ export function getTypes(p, name, dtPath) {
     else if (fs.existsSync(path.join(dtPath, mangleScoped(name)))) {
         return 'dt'
     }
-    else if (queryAlgolia(name)) {
+    else if (await downloadTar(p.dist.tarball)) {
         return 'index'
     }
 }
@@ -69,10 +71,37 @@ function mangleScoped(name) {
     return name[0] === "@" ? name.slice(1).replace('/', "__") : name
 }
 
-/** @param {string} name */
-function queryAlgolia(name) {
-    const response = JSON.parse(download(`https://ofcncog2cu-dsn.algolia.net/1/indexes/npm-search/${name}?attributes=types&x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.27.1&x-algolia-application-id=OFCNCOG2CU&x-algolia-api-key=f54e21fa3a2a0160595bb058179bfb1e`))
-    return response.types && response.types.ts && response.types.ts === "included";
+/** @param {string} url */
+async function downloadTar(url) {
+    let cachepath = path.join('data', path.basename(url))
+    if (!fs.existsSync(cachepath)) {
+        try {
+            await wget(url, { output: cachepath })
+        }
+        catch (e) {
+            console.log(e)
+            return false
+        }
+    }
+    let found = false
+    try {
+        tar.list({
+            sync: true,
+            file: cachepath,
+            filter(name) {
+                if (name.match(/package\/index.d.ts/)) {
+                    found = true
+                    return true
+                }
+                return false
+            }
+        })
+    }
+    catch (e) {
+        console.log(e)
+        return false
+    }
+    return found
 }
 
 /**

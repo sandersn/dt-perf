@@ -1,8 +1,9 @@
-const fs = require('fs')
-const random = require('random')
-const d3 = require('d3-format')
-const readline = require('readline')
-const { getTypes, getPackage } = require('./shared')
+import * as fs from 'fs'
+import random from 'random'
+import d3 from 'd3-format'
+import readline from 'readline'
+import { getTypes, getPackage } from './shared.js'
+import allPackages from 'all-the-package-names' assert { type: 'json' }
 
 const pct = d3.format(".1%")
 
@@ -24,16 +25,13 @@ async function main() {
     let skipped = 0
     /** @type {Record<string, number>} */
     let packagecount = {}
-    // const allPackages = Object.keys(allRepos)
-    /* @type {Array<{id: string, key: string, value: { rev: string }}>} */
-    /** @type {Array<string>} */
-    const allPackages = require('all-the-package-names') // JSON.parse(fs.readFileSync('all-docs.json', 'utf8')).rows
     const sampler = random.uniformInt(0, allPackages.length - 1)
+    const cache = new Map()
     for (let i = 0; i < sampleSize; i++) {
-        const name = allPackages[sampler()] // allPackages[sampler()].id
+        const name = allPackages[sampler()]
         const startDate = new Date(Date.now())
         startDate.setFullYear(startDate.getFullYear() - 2)
-        const p = await getPackage(name, startDate) // TODO: Calculate this instead of hard-coding it
+        const p = await getPackage(name, startDate)
         if (p === undefined || name.startsWith("@types/")) {
             skipped++
             continue
@@ -43,7 +41,7 @@ async function main() {
         // const repo = m?.[1]
         // TODO: Construct github query to see if ts/js ratio is small enough to guess that it's a JS project
         // Exclude test and d.ts files from the count.
-        let [total, typed, dt, names] = await countDependencies(p.packag.dependencies)
+        let [total, typed, dt, names] = await countDependencies(p.packag.dependencies, cache)
         for (const name of names)
             packagecount[name] = (packagecount[name] || 0) + 1
         dependencyCount += total
@@ -59,21 +57,28 @@ main().catch(e => { console.log(e); process.exit(1) });
 
 /**
  * @param {{ [s: string]: string }} dependencies
+ * @param {Map<string, { t: 'dt' | 'typings' | 'types' | 'index' | undefined, dp: { packag: import("npm-api").Package } | undefined }>} cache
  * @return {Promise<[number,number, number, string[]]>}
  */
-async function countDependencies(dependencies) {
+async function countDependencies(dependencies, cache) {
     let total = 0
     let typed = 0
     let dt = 0
     let names = []
     if (dependencies) {
         for (const d of Object.keys(dependencies)) {
-            const dp = await getPackage(d)
-            if (dp === undefined || d.startsWith("@types/")) {
+            if (d.startsWith("@types/")) {
                 continue
             }
+            let { dp, t } = cache.get(d) ?? { dp: await getPackage(d), t: undefined }
+            if (!cache.has(d)) {
+                if (dp === undefined) {
+                    continue
+                }
+                t = await getTypes(dp?.packag, d, dtPath)
+                cache.set(d, { dp, t })
+            }
             total++
-            const t = getTypes(dp.packag, d, dtPath)
             if (t) {
                 typed++
                 names.push(dp.packag.name)
