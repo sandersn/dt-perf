@@ -26,11 +26,12 @@ for (const [before,after] of Object.values(both)) {
     }
 }
 for (const k of Object.keys(beforetotal)) {
-    console.log(`${k}:\t\t${pct((aftertotal[k] - beforetotal[k]) / beforetotal[k])}\t${monteCarlo(both, k)}`)
+    if (k === 'name') continue
+    console.log(`${k}:\t\t${beforetotal[k]}\t${aftertotal[k]}\t${pct((aftertotal[k] - beforetotal[k]) / beforetotal[k])}\t${monteCarlo(both, k)}`)
 }
 
 /**
- * Note: I don't scale differences between projects, so large projects have more weight than small projects.
+ * Note: I compare percent differences between runs, so small projects may have more weight than large projects.
  * I need to do some more thinking or reading to decide which is right here.
  * @param {Record<string, [Perf, Perf]>} both
  * @param {string} k
@@ -38,12 +39,12 @@ for (const k of Object.keys(beforetotal)) {
  */
 function monteCarlo(both, k, n = 100) {
     const values = Object.values(both)
-    const original = values.map(([before, after]) => before[k] - after[k]).reduce((a, b) => a + b, 0) // not scaled percentage per-project, so large projects have more weight
+    const original = values.map(([before, after]) => (after[k] - before[k]) / before[k]).reduce((a, b) => a + b, 0) // not scaled percentage per-project, so large projects have more weight
     // (percentage scaling would give small projects more weight)
     // The null hypothesis is that randomly shuffling which result is from before/after would produce at least as large a difference
     let nullHypothesis = 0
     for (let i = 0; i < n; i++) {
-        const shuffled = values.map(([before, after]) => (Math.random() > 0.5 ? 1 : -1) * (before[k] - after[k])).reduce((a, b) => a + b, 0)
+        const shuffled = values.map(([before, after]) => (Math.random() > 0.5 ? 1 : -1) * ((after[k] - before[k]) / before[k])).reduce((a, b) => a + b, 0)
         if (Math.abs(shuffled) > Math.abs(original)) {
             nullHypothesis++
         }
