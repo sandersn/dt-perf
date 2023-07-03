@@ -48,18 +48,25 @@ export function parsePerformance(log) {
  * @param {import('npm-api').Package} p
  * @param {string} name
  * @param {string} dtPath
- * @return {Promise<'dt' | 'typings' | 'types' | 'index' | undefined>}
+ * @return {Promise<'dt' | 'typings' | 'types' | 'index' | 'exports' | 'imports' | undefined>}
  */
 export async function getTypes(p, name, dtPath) {
     if (p.typings) {
         return 'typings'
     }
-    if (p.types) {
+    else if (p.types) {
         return 'types'
+    }
+    else if (p.exports && Object.values(p.exports).some(e => e?.types)) {
+        return 'exports'
+    }
+    else if (p.imports && Object.values(p.imports).some(e => e?.types)) {
+        return 'imports'
     }
     else if (fs.existsSync(path.join(dtPath, mangleScoped(name)))) {
         return 'dt'
     }
+    // TODO: Also check for .js/.mjs/.cjs files in main/exports and look for those files next to them
     else if (await downloadTar(p.dist.tarball)) {
         return 'index'
     }

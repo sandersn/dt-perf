@@ -4,7 +4,7 @@ import d3 from 'd3-format'
 import readline from 'readline'
 import { getTypes, getPackage } from './shared.js'
 import allPackages from 'all-the-package-names' assert { type: 'json' }
-
+// $ node typedLikelihood2.js 2>/dev/null
 const pct = d3.format(".1%")
 
 const dtPath = "../../DefinitelyTyped/types"
@@ -57,7 +57,7 @@ main().catch(e => { console.log(e); process.exit(1) });
 
 /**
  * @param {{ [s: string]: string }} dependencies
- * @param {Map<string, { t: 'dt' | 'typings' | 'types' | 'index' | undefined, dp: { packag: import("npm-api").Package } | undefined }>} cache
+ * @param {Map<string, { t: 'dt' | 'typings' | 'types' | 'index' | 'exports' | 'imports' | undefined, dp: { packag: import("npm-api").Package } | undefined }>} cache
  * @return {Promise<[number,number, number, string[]]>}
  */
 async function countDependencies(dependencies, cache) {
@@ -75,7 +75,11 @@ async function countDependencies(dependencies, cache) {
                 if (dp === undefined) {
                     continue
                 }
+                // TODO: getTypes likely needs to update to understand exports entries in package.json
                 t = await getTypes(dp?.packag, d, dtPath)
+                if (t === 'imports') {
+                    throw new Error("Imports not supported yet")
+                }
                 cache.set(d, { dp, t })
             }
             total++

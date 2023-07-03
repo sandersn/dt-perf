@@ -23,6 +23,9 @@ function match(name, lines) {
   else if (s.includes("The declaration should use 'export =' syntax")) {
     return 'npm-naming-export-equals'
   }
+  else if (s.includes("Cannot find module 'events' or")) {
+    return 'missing-node-events-dep'
+  }
   else if (name === 'absolute-url') {
     return 'failed-module-augmentation'
   }
