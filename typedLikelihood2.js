@@ -21,6 +21,7 @@ async function main() {
     let typedDependencies = 0
     let dependencyCount = 0
     let definitelyTypedPackages = 0
+    let typedFiles = 0
     let perfect = 0
     let skipped = 0
     /** @type {Record<string, number>} */
@@ -41,29 +42,32 @@ async function main() {
         // const repo = m?.[1]
         // TODO: Construct github query to see if ts/js ratio is small enough to guess that it's a JS project
         // Exclude test and d.ts files from the count.
-        let [total, typed, dt, names] = await countDependencies(p.packag.dependencies, cache)
+        let [total, typed, dt, typedFile, names] = await countDependencies(p.dependencies, cache)
         for (const name of names)
             packagecount[name] = (packagecount[name] || 0) + 1
         dependencyCount += total
         typedDependencies += typed
         definitelyTypedPackages += dt
+        typedFiles += typedFile
         if (total === typed && total > 0)
             perfect++
-        summary(i, skipped, perfect, dependencyCount, typedDependencies, definitelyTypedPackages, packagecount)
+        summary(i, skipped, perfect, dependencyCount, typedDependencies, definitelyTypedPackages, typedFiles, packagecount)
     }
+    console.log('\n\n\n' + dumpHistogram(packagecount, 100))
 }
 
 main().catch(e => { console.log(e); process.exit(1) });
 
 /**
  * @param {{ [s: string]: string }} dependencies
- * @param {Map<string, { t: 'dt' | 'typings' | 'types' | 'index' | 'exports' | 'imports' | undefined, dp: { packag: import("npm-api").Package } | undefined }>} cache
- * @return {Promise<[number,number, number, string[]]>}
+ * @param {Map<string, { t: 'dt' | 'types' | 'file' | undefined, dp: import("npm-api").Package | undefined }>} cache
+ * @return {Promise<[number, number, number, number, string[]]>}
  */
 async function countDependencies(dependencies, cache) {
     let total = 0
     let typed = 0
     let dt = 0
+    let file = 0
     let names = []
     if (dependencies) {
         for (const d of Object.keys(dependencies)) {
@@ -75,24 +79,25 @@ async function countDependencies(dependencies, cache) {
                 if (dp === undefined) {
                     continue
                 }
-                // TODO: getTypes likely needs to update to understand exports entries in package.json
-                t = await getTypes(dp?.packag, d, dtPath)
-                if (t === 'imports') {
-                    throw new Error("Imports not supported yet")
-                }
+                t = await getTypes(dp, d, dtPath)
                 cache.set(d, { dp, t })
             }
             total++
             if (t) {
                 typed++
-                names.push(dp.packag.name)
                 if (t === 'dt') {
                     dt++
                 }
+                else if (t === 'file') {
+                    file++
+                }
+            }
+            else {
+                names.push(dp.name)
             }
         }
     }
-    return [total, typed, dt, names]
+    return [total, typed, dt, file, names]
 }
 
 /**
@@ -102,9 +107,10 @@ async function countDependencies(dependencies, cache) {
  * @param {number} dependencyCount
  * @param {number} typedDependencies
  * @param {number} definitelyTypedPackages
+ * @param {number} typedFiles
  * @param {Record<string, number>} packagecount
  */
-function summary(i, skipped, perfect, dependencyCount, typedDependencies, definitelyTypedPackages, packagecount) {
+function summary(i, skipped, perfect, dependencyCount, typedDependencies, definitelyTypedPackages, typedFiles, packagecount) {
     const pTyped = typedDependencies / dependencyCount
     if (i % 100) {
         readline.clearLine(process.stdout, /*left*/ -1)
@@ -113,7 +119,7 @@ function summary(i, skipped, perfect, dependencyCount, typedDependencies, defini
     else {
         process.stdout.write('\n')
     }
-    const msg = `P(typed-dep): ${pct(pTyped)} (total: ${dependencyCount}) (samples: ${i}/${sampleSize}) (DT-only: ${pct(definitelyTypedPackages / typedDependencies)}) PERFECT: ${perfect} (${pct(perfect / (i - skipped))}); ${dumpHistogram(packagecount, 6)}`
+    const msg = `P(typed-dep): ${pct(pTyped)} (total: ${dependencyCount}) (n: ${i}-${skipped}/${sampleSize}) (DT: ${pct(definitelyTypedPackages / typedDependencies)}, file: ${typedFiles}) PERFECT: ${pct(perfect / (i - skipped))}; ${dumpHistogram(packagecount, 6)}`
     process.stdout.write(msg)
 }
 

@@ -3,9 +3,9 @@
         "noEmit": true,
         "checkJs": true,
         "allowJs": true,
-        "strict": true
+        "strict": true,
         "target": "esnext",
-        "module": "esnext",
+        "module": "nodenext",
         "moduleResolution": "nodenext",
         "allowSyntheticDefaultImports": true
     },
