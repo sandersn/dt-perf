@@ -103,55 +103,69 @@ async function downloadTar(url) {
 
 /**
  * @param {string} name
- * @param {Date | string} [mustBePublishedAfter]
+ * @param {Date} start
+ * @param {Date} end
  * @return {Promise<import('npm-api').Package | undefined>}
  */
-export async function getPackage(name, mustBePublishedAfter) {
-    const version = await getLatestVersion(name, mustBePublishedAfter)
-    let packag
-    const repo = new npm.Repo(name)
+export async function getPackage(name, start, end) {
+    const version = await getLatestVersion(name, start, end)
+    if (!version) {
+        return undefined
+    }
     try {
-        if (mustBePublishedAfter && !version) {
-            return undefined
-        }
-        packag = version ? await repo.package(version) : await repo.package()
+        return await new npm.Repo(name).package(version)
     }
     catch (e) {
-        // do nothing, caller needs to handle it
+        return undefined
     }
-    return packag
+}
+
+/**
+ * @param {Record<string, { count: number, types: 'dt' | 'types' | 'file' | undefined | '' }>} h
+ * @param {number} n
+ */
+export function sortHistogram(h, n) {
+    return Object.entries(h).sort((x,y) => x[1].count < y[1].count ? 1 : -1).slice(0, n)
+}
+
+/**
+ * @param {Record<string, { count: number, types: 'dt' | 'types' | 'file' | undefined | '' }>} h
+ * @param {number} n
+ */
+export function dumpHistogram(h, n) {
+    return sortHistogram(h, n).map(([name,count]) => `${name}(${count.count})`).join(',')
 }
 
 /**
  * @param {string} name
- * @param {Date | string | undefined} mustBePublishedAfter
+ * @param {Date} start
+ * @param {Date} end
  */
-async function getLatestVersion(name, mustBePublishedAfter) {
-    if (mustBePublishedAfter) {
-        let repo
-        try {
-            repo = await clientGet('https://registry.npmjs.org/' + name, { timeout: 10000 })
-        }
-        catch (e) {
-        }
-        if (repo && repo.time) {
-            return findLatestVersion(repo.time, new Date(mustBePublishedAfter))
-        }
+async function getLatestVersion(name, start, end) {
+    let repo
+    try {
+        repo = await clientGet('https://registry.npmjs.org/' + name, { timeout: 10000 })
+    }
+    catch (e) {
+    }
+    if (repo && repo.time) {
+        return findLatestVersion(repo.time, start, end)
     }
 }
 
 /**
  * @param {{ [s: string]: string }} time
- * @param {Date} mustBePublishedAfter
+ * @param {Date} start
+ * @param {Date} end
  */
-function findLatestVersion (time, mustBePublishedAfter) {
+function findLatestVersion(time, start, end) {
     let latestPublish = new Date(0)
     let latestVersion
     for (const v of Object.keys(time)) {
         if (v === 'modified' || v === 'created')
             continue
         const publishDate = new Date(time[v])
-        if (publishDate < mustBePublishedAfter)
+        if (publishDate < start || end < publishDate)
             continue
         if (publishDate > latestPublish) {
             latestPublish = publishDate
@@ -160,3 +174,4 @@ function findLatestVersion (time, mustBePublishedAfter) {
     }
     return latestVersion
 }
+
