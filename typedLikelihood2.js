@@ -8,7 +8,7 @@ import allPackages from 'all-the-package-names' assert { type: 'json' }
 const pct = d3.format(".1%")
 
 const dtPath = "../../DefinitelyTyped/types"
-const sampleSize = 30_000
+const sampleSize = 10_000
 if (!fs.existsSync(dtPath)) {
     console.error("Incorrect path to Definitely Typed: ", dtPath)
     process.exit(1)
@@ -23,28 +23,20 @@ async function main() {
     let definitelyTypedPackages = 0
     let typedFiles = 0
     let perfect = 0
-    let skipped = 0
     /** @type {Record<string, { count: number, types: 'dt' | 'types' | 'file' | undefined | '' }>} */
     let packagecount = {}
     const sampler = random.uniformInt(0, allPackages.length - 1)
     const cache = new Map()
     const beginning = new Date('1/1/2000')
     // TODO: Check out DT and install all-the-package-names at the correct test date each time
-    const startDate = new Date('4/1/2024') // new Date(Date.now())
+    const startDate = new Date('4/3/2024') // new Date(Date.now())
     const endDate = new Date(startDate)
     startDate.setFullYear(startDate.getFullYear() - 2)
     for (let i = 0; i < sampleSize; i++) {
-        const name = allPackages[sampler()]
-        const p = await getPackage(name, startDate, endDate)
-        if (p === undefined || name.startsWith("@types/")) {
-            skipped++
-            continue
-        }
-        // const m = p.packag.repository.url.match(/https:\/\/github.com\/([^/]+\/[^.]+)\.git/)
-        // console.log(m)
-        // const repo = m?.[1]
-        // TODO: Construct github query to see if ts/js ratio is small enough to guess that it's a JS project
-        // Exclude test and d.ts files from the count.
+        let p
+        do {
+            p = await getPackage(allPackages[sampler()], startDate, endDate)
+        } while (p === undefined || p.name.startsWith("@types/") || !p.dependencies || Object.keys(p.dependencies).length > 50)
         let [total, typed, dt, typedFile, names] = await countDependencies(p.dependencies, cache, beginning, endDate)
         for (const [name, type] of names) {
             if (!(name in packagecount)) {
@@ -61,7 +53,7 @@ async function main() {
         typedFiles += typedFile
         if (total === typed && total > 0)
             perfect++
-        summary(i, skipped, perfect, dependencyCount, typedDependencies, definitelyTypedPackages, typedFiles, packagecount)
+        summary(i, perfect, dependencyCount, typedDependencies, definitelyTypedPackages, typedFiles, packagecount)
     }
     console.log('\n\n\n' + dumpHistogram(packagecount, 100))
     fs.writeFileSync('histogram.json', JSON.stringify(packagecount, null, 2))
@@ -117,7 +109,6 @@ async function countDependencies(dependencies, cache, start, end) {
 
 /**
  * @param {number} i
- * @param {number} skipped
  * @param {number} perfect
  * @param {number} dependencyCount
  * @param {number} typedDependencies
@@ -125,7 +116,7 @@ async function countDependencies(dependencies, cache, start, end) {
  * @param {number} typedFiles
  * @param {Record<string, { count: number, types: 'dt' | 'types' | 'file' | undefined | '' }>} packagecount
  */
-function summary(i, skipped, perfect, dependencyCount, typedDependencies, definitelyTypedPackages, typedFiles, packagecount) {
+function summary(i, perfect, dependencyCount, typedDependencies, definitelyTypedPackages, typedFiles, packagecount) {
     const pTyped = typedDependencies / dependencyCount
     if (i % 100) {
         readline.clearLine(process.stdout, /*left*/ -1)
@@ -134,6 +125,6 @@ function summary(i, skipped, perfect, dependencyCount, typedDependencies, defini
     else {
         process.stdout.write('\n')
     }
-    const msg = `P(typed-dep): ${pct(pTyped)} (total: ${dependencyCount}) (n: ${i}-${skipped}/${sampleSize}) (DT: ${pct(definitelyTypedPackages / typedDependencies)}, file: ${typedFiles}) PERFECT: ${pct(perfect / (i - skipped))}; ${dumpHistogram(packagecount, 3)}`
+    const msg = `P(typed-dep): ${pct(pTyped)} (total: ${dependencyCount}) (n: ${i}/${sampleSize}) (DT: ${pct(definitelyTypedPackages / typedDependencies)}, file: ${typedFiles}) PERFECT: ${pct(perfect / i)}; ${dumpHistogram(packagecount, 3)}`
     process.stdout.write(msg)
 }

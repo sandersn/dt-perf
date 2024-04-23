@@ -53,12 +53,12 @@ export async function getTypes(p, name, dtPath) {
     if (p.typings || p.types) {
         return 'types'
     }
-    else if (fs.existsSync(path.join(dtPath, mangleScoped(name)))) {
-        return 'dt'
-    }
     // TODO: Also check for .js/.mjs/.cjs files in main/exports and look for those files next to them
     else if (await downloadTar(p.dist.tarball)) {
         return 'file'
+    }
+    else if (fs.existsSync(path.join(dtPath, mangleScoped(name)))) {
+        return 'dt'
     }
 }
 

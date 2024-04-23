@@ -30,6 +30,7 @@ declare module "npm-api" {
     namespace NpmApi {
         interface Package {
             [s: string]: any
+            name: string
             typings?: string
             types?: string
             repository?: {
