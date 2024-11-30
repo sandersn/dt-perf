@@ -24,7 +24,7 @@
     "npm-api": "^0.4.12",
     "npm-registry-client": "^8.6.0",
     "random": "^2.1.1",
-    "shelljs": "^0.8.4",
+    "shelljs": "^0.8.5",
     "stats-lite": "^2.2.0",
     "tar": "^4.4.8"
   },
