@@ -21,7 +21,7 @@
     "date-range-array": "^2.1.0",
     "download-file-sync": "^1.0.4",
     "node-wget-promise": "^0.1.6",
-    "npm-api": "^0.4.12",
+    "npm-api": "^1.0.1",
     "npm-registry-client": "^8.6.0",
     "random": "^2.1.1",
     "shelljs": "^0.8.4",
